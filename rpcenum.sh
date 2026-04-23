@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Author: Marcelo Vázquez (aka S4vitar)
-# Modified: interactive credential input + authenticated RPC support
+# Modified: interactive credential input + authenticated RPC support + DAUsersInfo mode
 
 #Colours
 greenColour="\e[0;32m\033[1m"
@@ -34,11 +34,12 @@ trap ctrl_c INT
 function helpPanel(){
 	echo -e "\n${yellowColour}[*]${endColour}${grayColour} Uso: rpcenum${endColour}"
 	echo -e "\n\t${purpleColour}e)${endColour}${yellowColour} Enumeration Mode${endColour}"
-	echo -e "\n\t\t${grayColour}DUsers${endColour}${redColour}     (Domain Users)${endColour}"
-	echo -e "\t\t${grayColour}DUsersInfo${endColour}${redColour}  (Domain Users with info)${endColour}"
-	echo -e "\t\t${grayColour}DAUsers${endColour}${redColour}     (Domain Admin Users)${endColour}"
-	echo -e "\t\t${grayColour}DGroups${endColour}${redColour}     (Domain Groups)${endColour}"
-	echo -e "\t\t${grayColour}All${endColour}${redColour}         (All Modes)${endColour}"
+	echo -e "\n\t\t${grayColour}DUsers${endColour}${redColour}       (Domain Users)${endColour}"
+	echo -e "\t\t${grayColour}DUsersInfo${endColour}${redColour}   (Domain Users with info)${endColour}"
+	echo -e "\t\t${grayColour}DAUsers${endColour}${redColour}      (Domain Admin Users)${endColour}"
+	echo -e "\t\t${grayColour}DAUsersInfo${endColour}${redColour}  (Domain Admin Users with info)${endColour}"
+	echo -e "\t\t${grayColour}DGroups${endColour}${redColour}      (Domain Groups)${endColour}"
+	echo -e "\t\t${grayColour}All${endColour}${redColour}          (All Modes)${endColour}"
 	echo -e "\n\t${purpleColour}i)${endColour}${yellowColour} Host IP Address${endColour}"
 	echo -e "\n\t${purpleColour}u)${endColour}${yellowColour} Username (default: empty = null session)${endColour}"
 	echo -e "\n\t${purpleColour}p)${endColour}${yellowColour} Password (default: empty = null session)${endColour}"
@@ -101,19 +102,21 @@ function interactive_input(){
 	echo -e "  ${grayColour}1)${endColour} DUsers"
 	echo -e "  ${grayColour}2)${endColour} DUsersInfo"
 	echo -e "  ${grayColour}3)${endColour} DAUsers"
-	echo -e "  ${grayColour}4)${endColour} DGroups"
-	echo -e "  ${grayColour}5)${endColour} All"
+	echo -e "  ${grayColour}4)${endColour} DAUsersInfo"
+	echo -e "  ${grayColour}5)${endColour} DGroups"
+	echo -e "  ${grayColour}6)${endColour} All"
 
 	local mode_choice=""
 	while [ -z "$enum_mode" ]; do
-		echo -ne "\n${purpleColour}[>]${endColour}${yellowColour} Selecciona modo [1-5]: ${endColour}"
+		echo -ne "\n${purpleColour}[>]${endColour}${yellowColour} Selecciona modo [1-6]: ${endColour}"
 		read mode_choice
 		case $mode_choice in
 			1) enum_mode="DUsers";;
 			2) enum_mode="DUsersInfo";;
 			3) enum_mode="DAUsers";;
-			4) enum_mode="DGroups";;
-			5) enum_mode="All";;
+			4) enum_mode="DAUsersInfo";;
+			5) enum_mode="DGroups";;
+			6) enum_mode="All";;
 			*) echo -e "${redColour}[!] Opción inválida.${endColour}";;
 		esac
 	done
@@ -209,6 +212,24 @@ function extract_DAUsers(){
 	rm -f $tmp_file
 }
 
+function extract_DAUsers_Info(){
+	echo -e "\n${yellowColour}[*]${endColour}${grayColour} Enumerating Domain Admin Users with description...${endColour}\n"
+	rid_dagroup=$(rpcclient_cmd "$1" "enumdomgroups" | grep "Domain Admins" | awk 'NF{print $NF}' | grep -oP '\[.*?\]' | tr -d '[]')
+	rid_dausers=$(rpcclient_cmd "$1" "querygroupmem $rid_dagroup" | awk '{print $1}' | grep -oP '\[.*?\]' | tr -d '[]')
+	echo "DomainAdminUser,Description" > $tmp_file
+	for da_user_rid in $rid_dausers; do
+		rpcclient_cmd "$1" "queryuser $da_user_rid" \
+			| grep -E 'User Name|Description' \
+			| cut -d ':' -f 2- \
+			| sed 's/^\s*//' \
+			| tr '\n' ',' \
+			| sed 's/,$//' >> $tmp_file
+		echo "" >> $tmp_file
+	done
+	echo -ne "${blueColour}"; printTable ',' "$(cat $tmp_file)"; echo -ne "${endColour}"
+	rm -f $tmp_file
+}
+
 function extract_DGroups(){
 	echo -e "\n${yellowColour}[*]${endColour}${grayColour} Enumerating Domain Groups...${endColour}\n"
 	rpcclient_cmd "$host_ip" "enumdomgroups" | grep -oP '\[.*?\]' | grep "0x" | tr -d '[]' >> $tmp_file
@@ -228,6 +249,7 @@ function extract_All(){
 	extract_DUsers $1
 	extract_DUsers_Info $1
 	extract_DAUsers $1
+	extract_DAUsers_Info $1
 	extract_DGroups $1
 }
 
@@ -242,11 +264,12 @@ function beginEnumeration(){
 	if [ "$rpc_status" == "0" ]; then
 		if [ "$port_status" == "0" ]; then
 			case $enum_mode in
-				DUsers)     extract_DUsers $host_ip;;
-				DUsersInfo) extract_DUsers_Info $host_ip;;
-				DAUsers)    extract_DAUsers $host_ip;;
-				DGroups)    extract_DGroups $host_ip;;
-				All)        extract_All $host_ip;;
+				DUsers)      extract_DUsers $host_ip;;
+				DUsersInfo)  extract_DUsers_Info $host_ip;;
+				DAUsers)     extract_DAUsers $host_ip;;
+				DAUsersInfo) extract_DAUsers_Info $host_ip;;
+				DGroups)     extract_DGroups $host_ip;;
+				All)         extract_All $host_ip;;
 				*)
 					echo -e "\n${redColour}[!] Opción no válida${endColour}"
 					helpPanel
