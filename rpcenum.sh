@@ -3,6 +3,11 @@
 # Author: Marcelo Vázquez (aka S4vitar)
 # Modified: interactive credential input + authenticated RPC support + DAUsersInfo mode
 
+#!/bin/bash
+
+# Author: Marcelo Vázquez (aka S4vitar)
+# Modified: interactive credential input + authenticated RPC support + DAUsersInfo mode
+
 #Colours
 greenColour="\e[0;32m\033[1m"
 endColour="\033[0m\e[0m"
@@ -17,7 +22,7 @@ declare -r tmp_file="/dev/shm/tmp_file"
 declare -r tmp_file2="/dev/shm/tmp_file2"
 declare -r tmp_file3="/dev/shm/tmp_file3"
 
-# Globals para credenciales
+# Global credential variables
 rpc_user=""
 rpc_pass=""
 host_ip=""
@@ -32,7 +37,7 @@ function ctrl_c(){
 trap ctrl_c INT
 
 function helpPanel(){
-	echo -e "\n${yellowColour}[*]${endColour}${grayColour} Uso: rpcenum${endColour}"
+	echo -e "\n${yellowColour}[*]${endColour}${grayColour} Usage: rpcenum${endColour}"
 	echo -e "\n\t${purpleColour}e)${endColour}${yellowColour} Enumeration Mode${endColour}"
 	echo -e "\n\t\t${grayColour}DUsers${endColour}${redColour}       (Domain Users)${endColour}"
 	echo -e "\t\t${grayColour}DUsersInfo${endColour}${redColour}   (Domain Users with info)${endColour}"
@@ -44,11 +49,11 @@ function helpPanel(){
 	echo -e "\n\t${purpleColour}u)${endColour}${yellowColour} Username (default: empty = null session)${endColour}"
 	echo -e "\n\t${purpleColour}p)${endColour}${yellowColour} Password (default: empty = null session)${endColour}"
 	echo -e "\n\t${purpleColour}h)${endColour}${yellowColour} Show this help panel${endColour}"
-	echo -e "\n${yellowColour}[*]${endColour}${grayColour} Si no pasas flags, el script pedirá los datos de forma interactiva.${endColour}\n"
+	echo -e "\n${yellowColour}[*]${endColour}${grayColour} If no flags are provided, the script will prompt for input interactively.${endColour}\n"
 	exit 1
 }
 
-# Construye el string de autenticación para rpcclient
+# Builds the authentication string for rpcclient
 function rpc_auth(){
 	if [ -z "$rpc_user" ]; then
 		echo '-U "" -N'
@@ -57,7 +62,7 @@ function rpc_auth(){
 	fi
 }
 
-# Wrapper para rpcclient con credenciales dinámicas
+# Wrapper for rpcclient with dynamic credentials
 function rpcclient_cmd(){
 	local target="$1"
 	local cmd="$2"
@@ -69,7 +74,7 @@ function rpcclient_cmd(){
 }
 
 # ─────────────────────────────────────────────
-# Input interactivo si no se pasaron flags
+# Interactive input if no flags were provided
 # ─────────────────────────────────────────────
 function interactive_input(){
 	echo -e "\n${turquoiseColour}╔══════════════════════════════════════╗${endColour}"
@@ -81,24 +86,24 @@ function interactive_input(){
 		echo -ne "${purpleColour}[>]${endColour}${yellowColour} Target IP: ${endColour}"
 		read host_ip
 		if [[ ! "$host_ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-			echo -e "${redColour}[!] IP inválida, intenta de nuevo.${endColour}"
+			echo -e "${redColour}[!] Invalid IP, please try again.${endColour}"
 			host_ip=""
 		fi
 	done
 
-	# Usuario
-	echo -ne "${purpleColour}[>]${endColour}${yellowColour} Username (Enter para null session): ${endColour}"
+	# Username
+	echo -ne "${purpleColour}[>]${endColour}${yellowColour} Username (press Enter for null session): ${endColour}"
 	read rpc_user
 
-	# Contraseña (solo si hay usuario)
+	# Password (only if a username was provided)
 	if [ -n "$rpc_user" ]; then
-		echo -ne "${purpleColour}[>]${endColour}${yellowColour} Password (Enter para vacío): ${endColour}"
+		echo -ne "${purpleColour}[>]${endColour}${yellowColour} Password (press Enter for empty): ${endColour}"
 		read -s rpc_pass
 		echo ""
 	fi
 
-	# Modo de enumeración
-	echo -e "\n${yellowColour}[*]${endColour}${grayColour} Modos disponibles:${endColour}"
+	# Enumeration mode
+	echo -e "\n${yellowColour}[*]${endColour}${grayColour} Available modes:${endColour}"
 	echo -e "  ${grayColour}1)${endColour} DUsers"
 	echo -e "  ${grayColour}2)${endColour} DUsersInfo"
 	echo -e "  ${grayColour}3)${endColour} DAUsers"
@@ -108,7 +113,7 @@ function interactive_input(){
 
 	local mode_choice=""
 	while [ -z "$enum_mode" ]; do
-		echo -ne "\n${purpleColour}[>]${endColour}${yellowColour} Selecciona modo [1-6]: ${endColour}"
+		echo -ne "\n${purpleColour}[>]${endColour}${yellowColour} Select mode [1-6]: ${endColour}"
 		read mode_choice
 		case $mode_choice in
 			1) enum_mode="DUsers";;
@@ -117,7 +122,7 @@ function interactive_input(){
 			4) enum_mode="DAUsersInfo";;
 			5) enum_mode="DGroups";;
 			6) enum_mode="All";;
-			*) echo -e "${redColour}[!] Opción inválida.${endColour}";;
+			*) echo -e "${redColour}[!] Invalid option.${endColour}";;
 		esac
 	done
 
@@ -125,7 +130,7 @@ function interactive_input(){
 }
 
 # ─────────────────────────────────────────────
-# Funciones de enumeración (usan rpcclient_cmd)
+# Enumeration functions (use rpcclient_cmd)
 # ─────────────────────────────────────────────
 function printTable(){
 	local -r delimiter="${1}"
@@ -257,7 +262,7 @@ function beginEnumeration(){
 	tput civis
 	nmap -p139 --open -T5 -v -n $host_ip 2>/dev/null | grep open > /dev/null 2>&1 && port_status=$?
 
-	# Test de conexión
+	# Connection test
 	rpcclient_cmd "$host_ip" "enumdomusers" > /dev/null 2>&1
 	local rpc_status=$?
 
@@ -271,17 +276,17 @@ function beginEnumeration(){
 				DGroups)     extract_DGroups $host_ip;;
 				All)         extract_All $host_ip;;
 				*)
-					echo -e "\n${redColour}[!] Opción no válida${endColour}"
+					echo -e "\n${redColour}[!] Invalid option${endColour}"
 					helpPanel
 					exit 1
 					;;
 			esac
 		else
-			echo -e "\n${redColour}[!] El puerto 139 parece cerrado en $host_ip${endColour}"
+			echo -e "\n${redColour}[!] Port 139 appears to be closed on $host_ip${endColour}"
 			tput cnorm; exit 0
 		fi
 	else
-		echo -e "\n${redColour}[!] Error: Acceso denegado. Verifica credenciales o null session.${endColour}"
+		echo -e "\n${redColour}[!] Error: Access denied. Check your credentials or null session.${endColour}"
 		tput cnorm; exit 0
 	fi
 }
@@ -290,7 +295,7 @@ function beginEnumeration(){
 # Main
 # ─────────────────────────────────────────────
 if [ "$(echo $UID)" != "0" ]; then
-	echo -e "\n${redColour}[*] Necesitas ejecutar el script como root.${endColour}\n"
+	echo -e "\n${redColour}[*] You need to run this script as root.${endColour}\n"
 	exit 1
 fi
 
@@ -306,7 +311,7 @@ while getopts ":e:i:u:p:h" arg; do
 	esac
 done
 
-# Si no se pasaron los flags obligatorios (-e y -i), modo interactivo
+# If mandatory flags (-e and -i) were not provided, enter interactive mode
 if [ $parameter_counter -lt 2 ]; then
 	interactive_input
 fi
