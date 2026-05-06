@@ -1,10 +1,4 @@
 #!/bin/bash
-
-# Author: Marcelo Vázquez (aka S4vitar)
-# Modified: interactive credential input + authenticated RPC support + DAUsersInfo mode
-
-#!/bin/bash
-
 # Author: Marcelo Vázquez (aka S4vitar)
 # Modified: interactive credential input + authenticated RPC support + DAUsersInfo mode
 
