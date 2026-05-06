@@ -51,7 +51,7 @@ sudo rpcenum -h
 | `-h` | Help panel |
 ---
 ## Requirements
-- rpcenmum
+- rpcenum
 - Your fav linux distro
 - Must be run as **root**
 ---
