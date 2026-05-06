@@ -1,87 +1,60 @@
 # rpcenum
-
-Script de enumeración RPC para entornos Active Directory vía `rpcclient`.
-
-> **Créditos originales:** [Marcelo Vázquez (S4vitar)](https://github.com/s4vitar)  
-> Este repositorio contiene una versión actualizada y modificada del script original.
-
+RPC enumeration script for Active Directory environments via `rpcclient`.
+> **Original credits:** [Marcelo Vázquez (S4vitar)](https://github.com/s4vitar)  
+> This repository contains an updated and modified version of the original script.
 ---
-
-## ¿Qué hace?
-
-Automatiza la enumeración de un dominio Windows a través del protocolo RPC (puerto 139), permitiendo extraer:
-
-- **DUsers** — Usuarios del dominio
-- **DUsersInfo** — Usuarios del dominio con descripción
-- **DAUsers** — Usuarios del grupo Domain Admins
-- **DGroups** — Grupos del dominio
-- **All** — Todos los modos anteriores en secuencia
-
+## What does it do?
+Automates the enumeration of a Windows domain through the RPC protocol (port 139), allowing you to extract:
+- **DUsers** — Domain users
+- **DUsersInfo** — Domain users with description
+- **DAUsers** — Users in the Domain Admins group
+- **DGroups** — Domain groups
+- **All** — All of the above modes in sequence
 ---
-
-## Cambios respecto al original
-
-- Soporte de **autenticación con credenciales** (usuario y contraseña), además de null session
-- **Modo interactivo**: si no se pasan flags, el script solicita los datos paso a paso
-- Nuevas flags `-u` (usuario) y `-p` (contraseña)
-- Wrapper `rpcclient_cmd()` centralizado para manejar null session vs. sesión autenticada
-- Limpieza de archivos temporales mejorada con `rm -f`
-- `trap ctrl_c INT` movido al scope global
-- Mensajes de error más descriptivos en caso de acceso denegado
-
+## Changes from the original
+- Support for **authentication with credentials** (username and password), in addition to null session
+- **Interactive mode**: if no flags are passed, the script prompts for data step by step
+- New flags `-u` (username) and `-p` (password)
+- Centralized `rpcclient_cmd()` wrapper to handle null session vs. authenticated session
+- Improved temporary file cleanup with `rm -f`
+- `trap ctrl_c INT` moved to global scope
+- More descriptive error messages when access is denied
 ---
-
-## Instalación
-
+## Installation
 ```bash
 chmod +x rpcenum.sh
 sudo cp rpcenum.sh /usr/local/bin/rpcenum
 ```
-
 ---
-
-## Uso
-
-### Modo interactivo (sin flags)
+## Usage
+### Interactive mode (no flags)
 ```bash
 sudo rpcenum
 ```
-El script te pedirá la IP, usuario, contraseña y modo de enumeración.
-
-### Modo con flags
-
+The script will prompt you for the IP, username, password, and enumeration mode.
+### Flag mode
 ```bash
 # Null session
 sudo rpcenum -i 192.168.1.10 -e All
-
-# Con credenciales
+# With credentials
 sudo rpcenum -i 192.168.1.10 -e All -u Administrator -p 'P@ssw0rd'
-
-# Ver ayuda
+# Show help
 sudo rpcenum -h
 ```
-
-### Flags disponibles
-
-| Flag | Descripción |
+### Available flags
+| Flag | Description |
 |------|-------------|
-| `-i` | IP del objetivo |
-| `-e` | Modo de enumeración (`DUsers`, `DUsersInfo`, `DAUsers`, `DGroups`, `All`) |
-| `-u` | Usuario (opcional, default: null session) |
-| `-p` | Contraseña (opcional) |
-| `-h` | Panel de ayuda |
-
+| `-i` | Target IP |
+| `-e` | Enumeration mode (`DUsers`, `DUsersInfo`, `DAUsers`, `DGroups`, `All`) |
+| `-u` | Username (optional, default: null session) |
+| `-p` | Password (optional) |
+| `-h` | Help panel |
 ---
-
-## Requisitos
-
-- Kali Linux (o cualquier distro con `rpcclient` y `nmap`)
-- Ejecutar como **root**
-- Puerto **139** abierto en el objetivo
-
+## Requirements
+- Kali Linux (or any distro with `rpcclient` and `nmap`)
+- Must be run as **root**
+- Port **139** open on the target
 ---
-
 ## Disclaimer
-
-Este script es para uso en entornos controlados y con autorización explícita.  
-El uso no autorizado contra sistemas ajenos es ilegal.
+This script is intended for use in controlled environments with explicit authorization.  
+Unauthorized use against third-party systems is illegal.
