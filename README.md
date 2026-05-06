@@ -51,9 +51,9 @@ sudo rpcenum -h
 | `-h` | Help panel |
 ---
 ## Requirements
-- Kali Linux (or any distro with `rpcclient` and `nmap`)
+- rpcenmum
+- Your fav linux distro
 - Must be run as **root**
-- Port **139** open on the target
 ---
 ## Disclaimer
 This script is intended for use in controlled environments with explicit authorization.  
