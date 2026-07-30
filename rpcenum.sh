@@ -2,7 +2,6 @@
 # Author: Marcelo Vázquez (aka S4vitar)
 # Modified: interactive credential input + authenticated RPC support + DAUsersInfo mode
 
-#Colours
 greenColour="\e[0;32m\033[1m"
 endColour="\033[0m\e[0m"
 redColour="\e[0;31m\033[1m"
@@ -16,7 +15,6 @@ declare -r tmp_file="/dev/shm/tmp_file"
 declare -r tmp_file2="/dev/shm/tmp_file2"
 declare -r tmp_file3="/dev/shm/tmp_file3"
 
-# Global credential variables
 rpc_user=""
 rpc_pass=""
 host_ip=""
@@ -47,7 +45,7 @@ function helpPanel(){
 	exit 1
 }
 
-# Builds the authentication string for rpcclient
+
 function rpc_auth(){
 	if [ -z "$rpc_user" ]; then
 		echo '-U "" -N'
@@ -56,7 +54,7 @@ function rpc_auth(){
 	fi
 }
 
-# Wrapper for rpcclient with dynamic credentials
+
 function rpcclient_cmd(){
 	local target="$1"
 	local cmd="$2"
@@ -67,9 +65,7 @@ function rpcclient_cmd(){
 	fi
 }
 
-# ─────────────────────────────────────────────
-# Interactive input if no flags were provided
-# ─────────────────────────────────────────────
+
 function interactive_input(){
 	echo -e "\n${turquoiseColour}╔══════════════════════════════════════╗${endColour}"
 	echo -e "${turquoiseColour}║        rpcenum - Interactive Mode    ║${endColour}"
@@ -96,7 +92,7 @@ function interactive_input(){
 		echo ""
 	fi
 
-	# Enumeration mode
+	# Enumeration
 	echo -e "\n${yellowColour}[*]${endColour}${grayColour} Available modes:${endColour}"
 	echo -e "  ${grayColour}1)${endColour} DUsers"
 	echo -e "  ${grayColour}2)${endColour} DUsersInfo"
@@ -123,9 +119,6 @@ function interactive_input(){
 	echo -e "\n${yellowColour}[*]${endColour}${grayColour} Config: IP=${endColour}${greenColour}${host_ip}${endColour} | ${grayColour}User=${endColour}${greenColour}${rpc_user:-<null session>}${endColour} | ${grayColour}Mode=${endColour}${greenColour}${enum_mode}${endColour}\n"
 }
 
-# ─────────────────────────────────────────────
-# Enumeration functions (use rpcclient_cmd)
-# ─────────────────────────────────────────────
 function printTable(){
 	local -r delimiter="${1}"
 	local -r data="$(removeEmptyLines "${2}")"
