@@ -294,7 +294,7 @@ while getopts ":e:i:u:p:h" arg; do
 	esac
 done
 
-# If mandatory flags (-e and -i) were not provided, enter interactive mode
+
 if [ $parameter_counter -lt 2 ]; then
 	interactive_input
 fi
