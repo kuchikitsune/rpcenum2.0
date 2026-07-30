@@ -278,9 +278,6 @@ function beginEnumeration(){
 	fi
 }
 
-# ─────────────────────────────────────────────
-# Main
-# ─────────────────────────────────────────────
 if [ "$(echo $UID)" != "0" ]; then
 	echo -e "\n${redColour}[*] You need to run this script as root.${endColour}\n"
 	exit 1
