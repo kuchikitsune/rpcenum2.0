@@ -1,6 +1,5 @@
 #!/bin/bash
-# Author: Marcelo Vázquez (aka S4vitar)
-# Modified: interactive credential input + authenticated RPC support + DAUsersInfo mode
+# Original Author: Marcelo Vázquez (aka S4vitar)
 
 greenColour="\e[0;32m\033[1m"
 endColour="\033[0m\e[0m"
